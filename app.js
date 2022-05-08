@@ -13,12 +13,11 @@ const headers = {
 let config = {
     uid: '2960574121',
     selfPath: '袁泉',
-    limit: -1,
+    limit: 100,
 }
 
-let sinceId = '0',
-    has_album = true,
-    picIdList = [];
+
+
 
 try {
     main();
@@ -88,6 +87,12 @@ function getAblum(url, headers) {
 
 // 获取整体的pictureUrl列表
 function generateAllPicId() {
+
+
+    let sinceId = '0',
+        has_album = true,
+        picIdList = [];
+
     return new Promise(async (resolve, reject) => {
         while (has_album === true) {
 
@@ -103,7 +108,13 @@ function generateAllPicId() {
                 let res = await getAblum(url, headers);
                 sinceId = res.sinceId;
                 picIdList = [...picIdList, ...res.resList.map(item => `https://wx3.sinaimg.cn/mw2000/${item.pid}.jpg`)];
-                console.log(sinceId, `共计${picIdList.length}张图片`);
+                let date = /_(\d{8})_/.exec(sinceId).pop();
+                if (date) {
+                    date = date.replace(/(\d{4})(\d{2})(\d{2})/, (all, y, m, d) => {
+                        return `${y}年${m}月${d}日`
+                    });
+                    console.log(`~${date} 共计${picIdList.length}张图片`);
+                }
             }
 
             if (config.limit > -1 && config.limit < picIdList.length) { // 超过了最大下载量，停止爬取
