@@ -1,8 +1,7 @@
 const axios = require('axios');
 const download = require('image-downloader');
 const path = require("path");
-
-
+const fs = require('fs');
 
 const headers = {
     "traceparent": "00-576890bd3c893f83637928195f82b0cd-dc849be545e85ffd-00",
@@ -19,8 +18,7 @@ let config = {
 
 let sinceId = '0',
     has_album = true,
-    picIdList = [],
-    count = 0;
+    picIdList = [];
 
 try {
     main();
@@ -105,8 +103,7 @@ function generateAllPicId() {
                 let res = await getAblum(url, headers);
                 sinceId = res.sinceId;
                 picIdList = [...picIdList, ...res.resList.map(item => `https://wx3.sinaimg.cn/mw2000/${item.pid}.jpg`)];
-                count++;
-                console.log(count, sinceId, picIdList.length);
+                console.log(sinceId, `共计${picIdList.length}张图片`);
             }
 
             if (config.limit > -1 && config.limit < picIdList.length) { // 超过了最大下载量，停止爬取
@@ -131,10 +128,18 @@ async function downloadImg(urls, selfPath = 'imgs') {
     }
 }
 
+// 创建目录
+async function mkdir(selfPath) {
+    let fullpath = path.join(__dirname, selfPath);
+    let stat = fs.existsSync(fullpath);
+    if (!stat) { // true 存在，false不存在
+        fs.mkdirSync(fullpath);
+    }
+}
 
 async function main() {
+    mkdir(config.selfPath);
     let pidUrls = await generateAllPicId();
-    
     downloadImg(pidUrls, config.selfPath);
 }
 
