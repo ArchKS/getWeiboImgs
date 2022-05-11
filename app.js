@@ -2,6 +2,8 @@ const axios = require('axios');
 const download = require('image-downloader');
 const path = require("path");
 const fs = require('fs');
+const { ChildProcess } = require('child_process');
+let total = 0;
 
 const headers = {
     "traceparent": "00-576890bd3c893f83637928195f82b0cd-dc849be545e85ffd-00",
@@ -11,9 +13,9 @@ const headers = {
 
 
 let config = {
-    uid: '2960574121',
-    selfPath: '袁泉',
-    limit: 100,
+    uid: '1951027255',
+    selfPath: '李如儒',
+    limit: -1,
 }
 
 
@@ -88,7 +90,6 @@ function getAblum(url, headers) {
 // 获取整体的pictureUrl列表
 function generateAllPicId() {
 
-
     let sinceId = '0',
         has_album = true,
         picIdList = [];
@@ -108,8 +109,9 @@ function generateAllPicId() {
                 let res = await getAblum(url, headers);
                 sinceId = res.sinceId;
                 picIdList = [...picIdList, ...res.resList.map(item => `https://wx3.sinaimg.cn/mw2000/${item.pid}.jpg`)];
-                let date = /_(\d{8})_/.exec(sinceId).pop();
-                if (date) {
+                let date = /_(\d{8})_/.exec(sinceId);
+                if (date && date.length > 0) {
+                    date = date.pop();
                     date = date.replace(/(\d{4})(\d{2})(\d{2})/, (all, y, m, d) => {
                         return `${y}年${m}月${d}日`
                     });
@@ -127,12 +129,15 @@ function generateAllPicId() {
 }
 
 
+let currentIndex = 0;
 // 传入Url列表，下载到selfPath路径
 async function downloadImg(urls, selfPath = 'imgs') {
+    let weishu = String(urls.length).length;
     for (let i = 0; i < urls.length; i++) {
+        currentIndex++;
         const options = {
             url: urls[i],
-            dest: path.join(__dirname, selfPath),
+            dest: path.join(__dirname, selfPath) +`/${String(currentIndex).padStart(weishu,'0')}.jpg`,
         };
         let { filename } = await download.image(options);
         console.log(`${i + 1}/${urls.length} Saved to ${filename}`);
@@ -148,9 +153,13 @@ async function mkdir(selfPath) {
     }
 }
 
+
+
 async function main() {
     mkdir(config.selfPath);
-    let pidUrls = await generateAllPicId();
+    let pidUrls = await generateAllPicId();// ['http://xxx.jpg','http://yyy.jpg']
+    total = pidUrls.length;
+
     downloadImg(pidUrls, config.selfPath);
 }
 
